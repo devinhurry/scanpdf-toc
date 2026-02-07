@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+from collections import Counter
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
@@ -116,6 +117,12 @@ class LlmClient:
     def page_matches_entry(self, entry: TocEntry, image_bytes: bytes) -> bool:
         raise NotImplementedError
 
+    def detect_printed_page_number(self, image_bytes: bytes) -> Optional[int]:
+        return None
+
+    def get_token_usage(self) -> Optional[dict[str, int]]:
+        return None
+
 
 class OpenAiVisionClient(LlmClient):
     """OpenAI-compatible multimodal client."""
@@ -156,15 +163,112 @@ class OpenAiVisionClient(LlmClient):
             base_url=base_url,
             default_headers=default_headers or None,
         )
+        self._input_tokens = 0
+        self._output_tokens = 0
+        self._total_tokens = 0
+        self._usage_requests = 0
 
+        has_responses_api = hasattr(self.client, "responses")
         if use_responses is None:
-            use_responses = True
-        self._force_responses = use_responses is True
-        self._use_responses = use_responses
+            self._use_responses = has_responses_api
+            self._force_responses = False
+        elif use_responses:
+            if not has_responses_api:
+                raise RuntimeError(
+                    "Installed `openai` package does not support Responses API. "
+                    "Upgrade `openai` or disable responses mode."
+                )
+            self._use_responses = True
+            self._force_responses = True
+        else:
+            self._use_responses = False
+            self._force_responses = False
 
     @staticmethod
     def _encode_image(image_bytes: bytes) -> str:
         return base64.b64encode(image_bytes).decode("ascii")
+
+    @staticmethod
+    def _as_responses_content(
+        user_content: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        converted: list[dict[str, Any]] = []
+        for part in user_content:
+            part_type = part.get("type")
+            if part_type == "text":
+                converted.append(
+                    {"type": "input_text", "text": str(part.get("text") or "")}
+                )
+                continue
+
+            if part_type == "image_url":
+                image_payload = part.get("image_url")
+                image_url: str = ""
+                detail: Optional[str] = None
+                if isinstance(image_payload, dict):
+                    image_url = str(image_payload.get("url") or "")
+                    detail = image_payload.get("detail")
+                elif image_payload is not None:
+                    image_url = str(image_payload)
+
+                item: dict[str, Any] = {
+                    "type": "input_image",
+                    "image_url": image_url,
+                }
+                if detail:
+                    item["detail"] = detail
+                converted.append(item)
+                continue
+
+            converted.append(part)
+        return converted
+
+    @staticmethod
+    def _get_value(obj: Any, key: str, default: Any = None) -> Any:
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
+    @staticmethod
+    def _as_int(value: Any) -> Optional[int]:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _record_usage(self, response: Any) -> None:
+        usage = self._get_value(response, "usage")
+        if usage is None:
+            return
+
+        input_tokens = self._as_int(
+            self._get_value(usage, "input_tokens", self._get_value(usage, "prompt_tokens"))
+        )
+        output_tokens = self._as_int(
+            self._get_value(usage, "output_tokens", self._get_value(usage, "completion_tokens"))
+        )
+        total_tokens = self._as_int(self._get_value(usage, "total_tokens"))
+
+        if total_tokens is None and (input_tokens is not None or output_tokens is not None):
+            total_tokens = (input_tokens or 0) + (output_tokens or 0)
+
+        if input_tokens is None and output_tokens is None and total_tokens is None:
+            return
+
+        self._usage_requests += 1
+        self._input_tokens += input_tokens or 0
+        self._output_tokens += output_tokens or 0
+        self._total_tokens += total_tokens or 0
+
+    def get_token_usage(self) -> Optional[dict[str, int]]:
+        if self._usage_requests == 0:
+            return None
+        return {
+            "input_tokens": self._input_tokens,
+            "output_tokens": self._output_tokens,
+            "total_tokens": self._total_tokens,
+            "requests": self._usage_requests,
+        }
 
     def _complete(self, system_prompt: str, user_content: list[dict[str, Any]]) -> str:
         logger.info("Calling LLM: model=%s use_responses=%s", self.model, self._use_responses)
@@ -184,22 +288,27 @@ class OpenAiVisionClient(LlmClient):
         response = self.client.responses.create(
             model=self.model,
             input=[
-                {"role": "system", "content": [{"type": "text", "text": system_prompt}]},
-                {"role": "user", "content": user_content},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": self._as_responses_content(user_content)},
             ],
             temperature=self.temperature,
         )
+        self._record_usage(response)
 
         text_chunks: List[str] = []
         for block in getattr(response, "output", []):
-            if block.get("type") != "message":
+            if self._get_value(block, "type") != "message":
                 continue
-            for content in block.get("content", []):
-                if content.get("type") == "output_text":
-                    text_chunks.append(content.get("text") or "")
+            for content in self._get_value(block, "content", []):
+                if self._get_value(content, "type") == "output_text":
+                    text_chunks.append(self._get_value(content, "text", "") or "")
 
         if not text_chunks and hasattr(response, "output_text"):
-            text_chunks.append("".join(response.output_text))  # type: ignore[attr-defined]
+            output_text = response.output_text  # type: ignore[attr-defined]
+            if isinstance(output_text, str):
+                text_chunks.append(output_text)
+            else:
+                text_chunks.append("".join(output_text))
 
         return "\n".join(text_chunks).strip()
 
@@ -213,6 +322,7 @@ class OpenAiVisionClient(LlmClient):
             messages=messages,
             temperature=self.temperature,
         )
+        self._record_usage(response)
 
         if not getattr(response, "choices", None):
             return ""
@@ -318,6 +428,32 @@ class OpenAiVisionClient(LlmClient):
         data = self._json_from_completion(response)
         return bool(data.get("match"))
 
+    def detect_printed_page_number(self, image_bytes: bytes) -> Optional[int]:
+        prompt = (
+            "Read the printed page number visible on this scanned page. "
+            "Use the page number shown on the page itself (not the PDF index). "
+            'Respond as JSON: {"printed_page_number": int|null}.'
+        )
+        response = self._complete(
+            system_prompt="You detect printed page numbers on scanned document pages.",
+            user_content=[
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{self._encode_image(image_bytes)}"
+                    },
+                },
+            ],
+        )
+        data = self._json_from_completion(response)
+        value = data.get("printed_page_number")
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            return None
+        return number if number > 0 else None
+
 
 class PdfTocGenerator:
     """Generate TOC outlines for scanned PDFs using an LLM."""
@@ -372,6 +508,9 @@ class PdfTocGenerator:
             doc.close()
 
         return output_path
+
+    def get_token_usage(self) -> Optional[dict[str, int]]:
+        return self.llm.get_token_usage()
 
     def _render_page(self, doc: fitz.Document, page_index: int) -> bytes:
         zoom_matrix = Matrix(self.render_zoom, self.render_zoom)
@@ -445,8 +584,14 @@ class PdfTocGenerator:
         entries: Sequence[TocEntry],
         toc_pages: Sequence[int],
     ) -> int:
+        offset_from_numbers = self._estimate_offset_from_printed_numbers(doc, toc_pages)
+        if offset_from_numbers is not None:
+            logger.info("Using page offset from printed page numbers: %s", offset_from_numbers)
+            return offset_from_numbers
+
         reference = self._pick_reference_entry(entries)
         if not reference:
+            logger.warning("Could not estimate offset from printed page numbers and no reference entry found.")
             return 0
 
         start_index = toc_pages[-1] + 1 if toc_pages else 0
@@ -455,9 +600,45 @@ class PdfTocGenerator:
         for page_index in range(start_index, search_end):
             image_bytes = self._render_page(doc, page_index)
             if self.llm.page_matches_entry(reference, image_bytes):
-                return (page_index + 1) - reference.page_number
-
+                offset = (page_index + 1) - reference.page_number
+                logger.info(
+                    "Using page offset from entry matching: %s (entry=%r, pdf_page=%s)",
+                    offset,
+                    reference.title,
+                    page_index + 1,
+                )
+                return offset
+        logger.warning("Offset estimation failed, defaulting to 0.")
         return 0
+
+    def _estimate_offset_from_printed_numbers(
+        self,
+        doc: fitz.Document,
+        toc_pages: Sequence[int],
+    ) -> Optional[int]:
+        start_index = toc_pages[-1] + 1 if toc_pages else 0
+        search_end = min(doc.page_count, start_index + self.offset_search_window)
+        deltas: List[int] = []
+
+        for page_index in range(start_index, search_end):
+            image_bytes = self._render_page(doc, page_index)
+            printed_page = self.llm.detect_printed_page_number(image_bytes)
+            if not printed_page:
+                continue
+            deltas.append((page_index + 1) - printed_page)
+
+        if not deltas:
+            return None
+
+        counts = Counter(deltas)
+        best_offset, frequency = counts.most_common(1)[0]
+        logger.info(
+            "Printed page offset candidates: best=%s count=%s total=%s",
+            best_offset,
+            frequency,
+            len(deltas),
+        )
+        return int(best_offset)
 
     def _build_toc_table(
         self,

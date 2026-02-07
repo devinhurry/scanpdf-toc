@@ -102,6 +102,16 @@ def create_generator(args: argparse.Namespace) -> PdfTocGenerator:
     )
 
 
+def format_token_usage_line(usage: dict[str, int]) -> str:
+    return (
+        "tokens: "
+        f"total={usage.get('total_tokens', 0)} "
+        f"input={usage.get('input_tokens', 0)} "
+        f"output={usage.get('output_tokens', 0)} "
+        f"requests={usage.get('requests', 0)}"
+    )
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -116,6 +126,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         parser.error(str(exc))
         return 1
     print(Path(output))
+    usage = generator.get_token_usage()
+    if usage:
+        print(format_token_usage_line(usage))
     return 0
 
 
