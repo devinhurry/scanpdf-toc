@@ -46,7 +46,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["scanpdf_toc*", "pdf_toc*"]
+include = ["scanpdf_toc*"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
