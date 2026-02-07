@@ -24,12 +24,44 @@ pip install -e .
 
 ### 2. Set API credentials
 
-Use `OPENAI_API_KEY`. If your provider is OpenAI-compatible, set `OPENAI_BASE_URL` to the provider endpoint.
+Use `OPENAI_API_KEY`. For OpenAI-compatible providers, set `OPENAI_BASE_URL`.
 
 ```bash
 export OPENAI_API_KEY="your_openai_key"
 export OPENAI_BASE_URL="https://your-provider.example/v1" # optional
 ```
+
+Common providers (OpenAI-style):
+
+| Provider | `OPENAI_BASE_URL` | OpenAI-style support | Docs | Example model |
+|---|---|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | Native | [API reference](https://platform.openai.com/docs/api-reference) | `gpt-4o-mini` |
+| OpenRouter | `https://openrouter.ai/api/v1` | Yes | [Quickstart](https://openrouter.ai/docs/quickstart) | `openrouter/free` |
+| Gemini (Google) | `https://generativelanguage.googleapis.com/v1beta/openai/` | Yes | [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai) | `gemini-2.0-flash` |
+| Kimi (Moonshot AI) | `https://api.moonshot.cn/v1` | Yes | [Quickstart (base URL shown)](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API docs](https://platform.moonshot.cn/docs/introduction) | `kimi-k2-0711-preview` |
+| Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) | `qwen-plus` |
+| MiniMax | `https://api.minimax.io/v1` | Yes | [Text quickstart](https://platform.minimax.io/document/quickstart/text) | `MiniMax-M1` |
+
+Notes:
+
+- Qwen international endpoint: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`.
+- MiniMax China endpoint: `https://api.minimax.chat/v1`.
+- Provider model IDs change over time; verify in each provider's model list.
+- `scanpdf-toc` default model is `gpt-4o-mini`.
+
+Free API by default?
+
+- Not by default. The project does not hardcode a keyless/free provider.
+- You can use free-tier models by setting your own provider key and base URL.
+- Example (OpenRouter free router):
+
+```bash
+export OPENAI_API_KEY="your_openrouter_key"
+export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+scanpdf-toc ./book.pdf --model openrouter/free
+```
+
+- OpenRouter free-model guidance: [FAQ: Free Models and Rate Limits](https://openrouter.ai/docs/faq#free-models-and-rate-limits).
 
 ### 3. Run
 
