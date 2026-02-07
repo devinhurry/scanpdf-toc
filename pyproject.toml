@@ -36,9 +36,9 @@ scanpdf-toc = "scanpdf_toc.cli:main"
 pdf-toc = "scanpdf_toc.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/<your-username>/scanpdf-toc"
-Repository = "https://github.com/<your-username>/scanpdf-toc"
-Issues = "https://github.com/<your-username>/scanpdf-toc/issues"
+Homepage = "https://github.com/devinhurry/scanpdf-toc"
+Repository = "https://github.com/devinhurry/scanpdf-toc"
+Issues = "https://github.com/devinhurry/scanpdf-toc/issues"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
