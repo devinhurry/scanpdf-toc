@@ -8,7 +8,7 @@ license = "MIT"
 authors = [
   { name = "scanpdf-toc contributors" }
 ]
-keywords = ["pdf", "toc", "bookmarks", "openai", "openrouter"]
+keywords = ["pdf", "toc", "bookmarks", "openai", "openai-compatible"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",

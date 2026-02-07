@@ -24,17 +24,11 @@ pip install -e .
 
 ### 2. 配置 API 密钥
 
-OpenAI：
+统一使用 `OPENAI_API_KEY`。如果你使用兼容 OpenAI 接口的其他提供商，可通过 `OPENAI_BASE_URL` 指定地址。
 
 ```bash
 export OPENAI_API_KEY="your_openai_key"
-```
-
-OpenRouter：
-
-```bash
-export OPENROUTER_API_KEY="your_openrouter_key"
-export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+export OPENAI_BASE_URL="https://your-provider.example/v1" # 可选
 ```
 
 ### 3. 运行

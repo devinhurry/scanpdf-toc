@@ -65,12 +65,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--api-key",
         type=str,
-        help="API key (or set OPENAI_API_KEY / OPENROUTER_API_KEY)",
+        help="API key (or set OPENAI_API_KEY)",
     )
     parser.add_argument(
         "--api-base",
         type=str,
-        help="Optional API base URL (e.g. https://openrouter.ai/api/v1)",
+        help="Optional API base URL (e.g. https://api.openai.com/v1)",
     )
     parser.add_argument(
         "--log-level",

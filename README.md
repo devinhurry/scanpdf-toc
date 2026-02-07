@@ -24,17 +24,11 @@ pip install -e .
 
 ### 2. Set API credentials
 
-OpenAI:
+Use `OPENAI_API_KEY`. If your provider is OpenAI-compatible, set `OPENAI_BASE_URL` to the provider endpoint.
 
 ```bash
 export OPENAI_API_KEY="your_openai_key"
-```
-
-OpenRouter:
-
-```bash
-export OPENROUTER_API_KEY="your_openrouter_key"
-export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+export OPENAI_BASE_URL="https://your-provider.example/v1" # optional
 ```
 
 ### 3. Run

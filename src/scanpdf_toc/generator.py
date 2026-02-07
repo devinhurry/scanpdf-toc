@@ -118,7 +118,7 @@ class LlmClient:
 
 
 class OpenAiVisionClient(LlmClient):
-    """OpenAI/OpenRouter multimodal client."""
+    """OpenAI-compatible multimodal client."""
 
     def __init__(
         self,
@@ -133,17 +133,15 @@ class OpenAiVisionClient(LlmClient):
 
         self.model = model
         self.temperature = temperature
-        api_key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise RuntimeError("Set OPENAI_API_KEY or OPENROUTER_API_KEY.")
+            raise RuntimeError("Set OPENAI_API_KEY.")
 
-        base_url = api_base or os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
-        if not base_url and os.getenv("OPENROUTER_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-            base_url = "https://openrouter.ai/api/v1"
+        base_url = api_base or os.getenv("OPENAI_BASE_URL")
 
         default_headers: dict[str, str] = {}
-        http_referer = os.getenv("OPENAI_HTTP_REFERER") or os.getenv("OPENROUTER_REFERER")
-        client_title = os.getenv("OPENAI_CLIENT_TITLE") or os.getenv("OPENROUTER_TITLE")
+        http_referer = os.getenv("OPENAI_HTTP_REFERER")
+        client_title = os.getenv("OPENAI_CLIENT_TITLE")
         if http_referer:
             default_headers["HTTP-Referer"] = http_referer
         if client_title:
@@ -155,9 +153,8 @@ class OpenAiVisionClient(LlmClient):
             default_headers=default_headers or None,
         )
 
-        base_lower = (base_url or "").lower()
         if use_responses is None:
-            use_responses = "openrouter.ai" not in base_lower
+            use_responses = True
         self._force_responses = use_responses is True
         self._use_responses = use_responses
 
