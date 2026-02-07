@@ -29,36 +29,38 @@ pip install -e .
 ```bash
 export OPENAI_API_KEY="your_openai_key"
 export OPENAI_BASE_URL="https://your-provider.example/v1" # 可选
+export OPENAI_MODEL="your_vision_model_id"                # 不传 --model 时必填
 ```
 
 常见提供商（OpenAI 风格）：
 
-| 提供商 | `OPENAI_BASE_URL` | 是否兼容 OpenAI 风格 | 文档 | 示例模型 |
-|---|---|---|---|---|
-| OpenAI | `https://api.openai.com/v1` | 原生 | [API 参考](https://platform.openai.com/docs/api-reference) | `gpt-4o-mini` |
-| OpenRouter | `https://openrouter.ai/api/v1` | 是 | [Quickstart](https://openrouter.ai/docs/quickstart) | `openrouter/free` |
-| Gemini（Google） | `https://generativelanguage.googleapis.com/v1beta/openai/` | 是 | [OpenAI 兼容接口](https://ai.google.dev/gemini-api/docs/openai) | `gemini-2.0-flash` |
-| Kimi（Moonshot AI） | `https://api.moonshot.cn/v1` | 是 | [快速开始（含 base URL）](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API 文档](https://platform.moonshot.cn/docs/introduction) | `kimi-k2-0711-preview` |
-| Qwen（DashScope） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 是 | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) | `qwen-plus` |
-| MiniMax | `https://api.minimax.io/v1` | 是 | [文本快速开始](https://platform.minimax.io/document/quickstart/text) | `MiniMax-M1` |
+| 提供商 | `OPENAI_BASE_URL` | 是否兼容 OpenAI 风格 | 文档 |
+|---|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | 原生 | [API 参考](https://platform.openai.com/docs/api-reference) |
+| OpenRouter | `https://openrouter.ai/api/v1` | 是 | [Quickstart](https://openrouter.ai/docs/quickstart) |
+| Gemini（Google） | `https://generativelanguage.googleapis.com/v1beta/openai/` | 是 | [OpenAI 兼容接口](https://ai.google.dev/gemini-api/docs/openai) |
+| Kimi（Moonshot AI） | `https://api.moonshot.cn/v1` | 是 | [快速开始（含 base URL）](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API 文档](https://platform.moonshot.cn/docs/introduction) |
+| Qwen（DashScope） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 是 | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) |
+| MiniMax | `https://api.minimax.io/v1` | 是 | [文本快速开始](https://platform.minimax.io/document/quickstart/text) |
 
 说明：
 
 - Qwen 国际站地址：`https://dashscope-intl.aliyuncs.com/compatible-mode/v1`。
 - MiniMax 中国区地址：`https://api.minimax.chat/v1`。
 - 各家模型 ID 会调整，建议以各自模型列表为准。
-- `scanpdf-toc` 默认模型是 `gpt-4o-mini`。
+- `scanpdf-toc` 不内置默认模型。
+- 你必须选择支持图片输入的视觉模型。
 
 是否支持“默认就用免费 API”？
 
 - 默认不启用。项目不会内置一个无密钥的免费提供商。
 - 你可以通过自己的密钥和 `OPENAI_BASE_URL` 切换到免费/低价模型。
-- 示例（OpenRouter 免费路由）：
+- 示例（OpenRouter 免费视觉模型，如有）：
 
 ```bash
 export OPENAI_API_KEY="your_openrouter_key"
 export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
-scanpdf-toc ./book.pdf --model openrouter/free
+scanpdf-toc ./book.pdf --model <vision_model_id>
 ```
 
 - OpenRouter 免费模型说明： [FAQ: Free Models and Rate Limits](https://openrouter.ai/docs/faq#free-models-and-rate-limits)。
@@ -66,7 +68,7 @@ scanpdf-toc ./book.pdf --model openrouter/free
 ### 3. 运行
 
 ```bash
-scanpdf-toc ./book.pdf -o ./book-with-toc.pdf
+scanpdf-toc ./book.pdf --model <vision_model_id> -o ./book-with-toc.pdf
 ```
 
 执行完成后会输出生成文件路径。
@@ -81,7 +83,7 @@ scanpdf-toc ./book.pdf -o ./book-with-toc.pdf
 - `--offset-window`：估算偏移时向后搜索页数（默认 `40`）
 - `--render-zoom`：页面渲染倍率（默认 `2.0`）
 - `--max-image-size`：发送给模型的图片最长边像素（默认 `1600`）
-- `--model`：多模态模型名称（默认 `gpt-4o-mini`）
+- `--model`：多模态模型名称（不传时需要设置 `OPENAI_MODEL`）
 - `--api-key`：直接指定 API Key（覆盖环境变量）
 - `--api-base`：自定义 API Base
 - `--log-level`：日志级别
@@ -90,8 +92,10 @@ scanpdf-toc ./book.pdf -o ./book-with-toc.pdf
 
 ```python
 from scanpdf_toc import PdfTocGenerator
+from scanpdf_toc.generator import OpenAiVisionClient
 
-generator = PdfTocGenerator(max_detection_pages=30, start_page=3)
+llm = OpenAiVisionClient(model="your_vision_model_id")
+generator = PdfTocGenerator(llm_client=llm, max_detection_pages=30, start_page=3)
 output_path = generator.generate("book.pdf")
 print(output_path)
 ```

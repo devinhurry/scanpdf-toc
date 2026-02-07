@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -59,8 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4o-mini",
-        help="Multimodal model name (default: gpt-4o-mini)",
+        help="Multimodal model name (required unless OPENAI_MODEL is set)",
     )
     parser.add_argument(
         "--api-key",
@@ -83,8 +83,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def create_generator(args: argparse.Namespace) -> PdfTocGenerator:
+    model = args.model or os.getenv("OPENAI_MODEL")
+    if not model:
+        raise ValueError("Set --model or OPENAI_MODEL to a vision-capable model.")
+
     llm = OpenAiVisionClient(
-        model=args.model,
+        model=model,
         api_key=args.api_key,
         api_base=args.api_base,
     )

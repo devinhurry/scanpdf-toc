@@ -29,36 +29,38 @@ Use `OPENAI_API_KEY`. For OpenAI-compatible providers, set `OPENAI_BASE_URL`.
 ```bash
 export OPENAI_API_KEY="your_openai_key"
 export OPENAI_BASE_URL="https://your-provider.example/v1" # optional
+export OPENAI_MODEL="your_vision_model_id"                # required if --model is not set
 ```
 
 Common providers (OpenAI-style):
 
-| Provider | `OPENAI_BASE_URL` | OpenAI-style support | Docs | Example model |
-|---|---|---|---|---|
-| OpenAI | `https://api.openai.com/v1` | Native | [API reference](https://platform.openai.com/docs/api-reference) | `gpt-4o-mini` |
-| OpenRouter | `https://openrouter.ai/api/v1` | Yes | [Quickstart](https://openrouter.ai/docs/quickstart) | `openrouter/free` |
-| Gemini (Google) | `https://generativelanguage.googleapis.com/v1beta/openai/` | Yes | [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai) | `gemini-2.0-flash` |
-| Kimi (Moonshot AI) | `https://api.moonshot.cn/v1` | Yes | [Quickstart (base URL shown)](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API docs](https://platform.moonshot.cn/docs/introduction) | `kimi-k2-0711-preview` |
-| Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) | `qwen-plus` |
-| MiniMax | `https://api.minimax.io/v1` | Yes | [Text quickstart](https://platform.minimax.io/document/quickstart/text) | `MiniMax-M1` |
+| Provider | `OPENAI_BASE_URL` | OpenAI-style support | Docs |
+|---|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | Native | [API reference](https://platform.openai.com/docs/api-reference) |
+| OpenRouter | `https://openrouter.ai/api/v1` | Yes | [Quickstart](https://openrouter.ai/docs/quickstart) |
+| Gemini (Google) | `https://generativelanguage.googleapis.com/v1beta/openai/` | Yes | [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai) |
+| Kimi (Moonshot AI) | `https://api.moonshot.cn/v1` | Yes | [Quickstart (base URL shown)](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API docs](https://platform.moonshot.cn/docs/introduction) |
+| Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) |
+| MiniMax | `https://api.minimax.io/v1` | Yes | [Text quickstart](https://platform.minimax.io/document/quickstart/text) |
 
 Notes:
 
 - Qwen international endpoint: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`.
 - MiniMax China endpoint: `https://api.minimax.chat/v1`.
 - Provider model IDs change over time; verify in each provider's model list.
-- `scanpdf-toc` default model is `gpt-4o-mini`.
+- `scanpdf-toc` has no hardcoded default model.
+- You must choose a vision-capable model (image input support).
 
 Free API by default?
 
 - Not by default. The project does not hardcode a keyless/free provider.
 - You can use free-tier models by setting your own provider key and base URL.
-- Example (OpenRouter free router):
+- Example (OpenRouter free vision model, if available):
 
 ```bash
 export OPENAI_API_KEY="your_openrouter_key"
 export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
-scanpdf-toc ./book.pdf --model openrouter/free
+scanpdf-toc ./book.pdf --model <vision_model_id>
 ```
 
 - OpenRouter free-model guidance: [FAQ: Free Models and Rate Limits](https://openrouter.ai/docs/faq#free-models-and-rate-limits).
@@ -66,7 +68,7 @@ scanpdf-toc ./book.pdf --model openrouter/free
 ### 3. Run
 
 ```bash
-scanpdf-toc ./book.pdf -o ./book-with-toc.pdf
+scanpdf-toc ./book.pdf --model <vision_model_id> -o ./book-with-toc.pdf
 ```
 
 The tool prints the output PDF path after completion.
@@ -85,7 +87,7 @@ Common options:
 - `--offset-window`: pages scanned for offset alignment (default: `40`)
 - `--render-zoom`: render zoom factor (default: `2.0`)
 - `--max-image-size`: max image edge length in pixels (default: `1600`)
-- `--model`: multimodal model name (default: `gpt-4o-mini`)
+- `--model`: multimodal model name (required unless `OPENAI_MODEL` is set)
 - `--api-key`: override env API key
 - `--api-base`: custom API base URL
 - `--log-level`: `CRITICAL|ERROR|WARNING|INFO|DEBUG`
@@ -94,8 +96,10 @@ Common options:
 
 ```python
 from scanpdf_toc import PdfTocGenerator
+from scanpdf_toc.generator import OpenAiVisionClient
 
-generator = PdfTocGenerator(max_detection_pages=30, start_page=3)
+llm = OpenAiVisionClient(model="your_vision_model_id")
+generator = PdfTocGenerator(llm_client=llm, max_detection_pages=30, start_page=3)
 output_path = generator.generate("book.pdf")
 print(output_path)
 ```

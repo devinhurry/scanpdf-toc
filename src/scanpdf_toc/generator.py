@@ -122,7 +122,7 @@ class OpenAiVisionClient(LlmClient):
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: Optional[str] = None,
         temperature: float = 0.2,
         api_key: Optional[str] = None,
         api_base: Optional[str] = None,
@@ -131,7 +131,11 @@ class OpenAiVisionClient(LlmClient):
         if OpenAI is None:
             raise RuntimeError("The `openai` package is required for OpenAiVisionClient.")
 
-        self.model = model
+        resolved_model = model or os.getenv("OPENAI_MODEL")
+        if not resolved_model:
+            raise RuntimeError("Set --model or OPENAI_MODEL to a vision-capable model.")
+
+        self.model = resolved_model
         self.temperature = temperature
         api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
