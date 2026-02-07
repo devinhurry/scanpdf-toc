@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.venv/
+venv/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Test / coverage
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets / local env
+.env
+.env.*
+*.pem
+*.key
+
+# Generated PDFs
+*-with-toc.pdf
