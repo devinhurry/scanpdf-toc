@@ -34,14 +34,14 @@ export OPENAI_MODEL="your_vision_model_id"                # 不传 --model 时�
 
 常见提供商（OpenAI 风格）：
 
-| 提供商 | `OPENAI_BASE_URL` | 是否兼容 OpenAI 风格 | 文档 |
-|---|---|---|---|
-| OpenAI | `https://api.openai.com/v1` | 原生 | [API 参考](https://platform.openai.com/docs/api-reference) |
-| OpenRouter | `https://openrouter.ai/api/v1` | 是 | [Quickstart](https://openrouter.ai/docs/quickstart) |
-| Gemini（Google） | `https://generativelanguage.googleapis.com/v1beta/openai/` | 是 | [OpenAI 兼容接口](https://ai.google.dev/gemini-api/docs/openai) |
-| Kimi（Moonshot AI） | `https://api.moonshot.cn/v1` | 是 | [快速开始（含 base URL）](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API 文档](https://platform.moonshot.cn/docs/introduction) |
-| Qwen（DashScope） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 是 | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) |
-| MiniMax | `https://api.minimax.io/v1` | 是 | [文本快速开始](https://platform.minimax.io/document/quickstart/text) |
+| 提供商 | `OPENAI_BASE_URL` | 是否兼容 OpenAI 风格 | 本项目推荐视觉模型 | 文档 |
+|---|---|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | 原生 | `gpt-4o-mini` | [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini) |
+| OpenRouter | `https://openrouter.ai/api/v1` | 是 | `openai/gpt-4o-mini` | [模型页](https://openrouter.ai/openai/gpt-4o-mini), [Models API](https://openrouter.ai/docs/api-reference/list-available-models) |
+| Gemini（Google） | `https://generativelanguage.googleapis.com/v1beta/openai/` | 是 | `gemini-3-flash-preview` | [OpenAI 兼容接口](https://ai.google.dev/gemini-api/docs/openai), [Gemini 模型列表](https://ai.google.dev/gemini-api/docs/models/gemini) |
+| Kimi（Moonshot AI） | `https://api.moonshot.cn/v1` | 是 | `kimi-thinking-preview` | [Kimi thinking 模型](https://platform.moonshot.cn/blog/posts/kimi-thinking) |
+| Qwen（DashScope） | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 是 | `qwen3-vl-plus` | [Qwen-VL OpenAI 兼容](https://www.alibabacloud.com/help/en/model-studio/qwen-vl-compatible-with-openai) |
+| MiniMax | `https://api.minimax.io/v1` | 是（OpenAI 格式） | 暂不建议（OpenAI 兼容文本接口文档未给出视觉模型） | [Compatible OpenAI API](https://platform.minimax.io/docs/api-reference/text-openai-api) |
 
 说明：
 
@@ -51,16 +51,40 @@ export OPENAI_MODEL="your_vision_model_id"                # 不传 --model 时�
 - `scanpdf-toc` 不内置默认模型。
 - 你必须选择支持图片输入的视觉模型。
 
+推荐直接复制的配置：
+
+```bash
+# OpenAI
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-4o-mini"
+
+# OpenRouter
+export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+export OPENAI_MODEL="openai/gpt-4o-mini"
+
+# Gemini
+export OPENAI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
+export OPENAI_MODEL="gemini-3-flash-preview"
+
+# Kimi
+export OPENAI_BASE_URL="https://api.moonshot.cn/v1"
+export OPENAI_MODEL="kimi-thinking-preview"
+
+# Qwen（国际站）
+export OPENAI_BASE_URL="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+export OPENAI_MODEL="qwen3-vl-plus"
+```
+
 是否支持“默认就用免费 API”？
 
 - 默认不启用。项目不会内置一个无密钥的免费提供商。
 - 你可以通过自己的密钥和 `OPENAI_BASE_URL` 切换到免费/低价模型。
-- 示例（OpenRouter 免费视觉模型，如有）：
+- 示例（OpenRouter 免费变体，如有）：
 
 ```bash
 export OPENAI_API_KEY="your_openrouter_key"
 export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
-scanpdf-toc ./book.pdf --model <vision_model_id>
+scanpdf-toc ./book.pdf --model openai/gpt-4o-mini:free
 ```
 
 - OpenRouter 免费模型说明： [FAQ: Free Models and Rate Limits](https://openrouter.ai/docs/faq#free-models-and-rate-limits)。

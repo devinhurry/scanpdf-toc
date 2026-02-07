@@ -34,14 +34,14 @@ export OPENAI_MODEL="your_vision_model_id"                # required if --model 
 
 Common providers (OpenAI-style):
 
-| Provider | `OPENAI_BASE_URL` | OpenAI-style support | Docs |
-|---|---|---|---|
-| OpenAI | `https://api.openai.com/v1` | Native | [API reference](https://platform.openai.com/docs/api-reference) |
-| OpenRouter | `https://openrouter.ai/api/v1` | Yes | [Quickstart](https://openrouter.ai/docs/quickstart) |
-| Gemini (Google) | `https://generativelanguage.googleapis.com/v1beta/openai/` | Yes | [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai) |
-| Kimi (Moonshot AI) | `https://api.moonshot.cn/v1` | Yes | [Quickstart (base URL shown)](https://platform.moonshot.cn/blog/articles/kimi-k2-api) / [API docs](https://platform.moonshot.cn/docs/introduction) |
-| Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes | [First API call](https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen) |
-| MiniMax | `https://api.minimax.io/v1` | Yes | [Text quickstart](https://platform.minimax.io/document/quickstart/text) |
+| Provider | `OPENAI_BASE_URL` | OpenAI-style support | Recommended vision model for this project | Docs |
+|---|---|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | Native | `gpt-4o-mini` | [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini) |
+| OpenRouter | `https://openrouter.ai/api/v1` | Yes | `openai/gpt-4o-mini` | [OpenRouter model page](https://openrouter.ai/openai/gpt-4o-mini), [Models API](https://openrouter.ai/docs/api-reference/list-available-models) |
+| Gemini (Google) | `https://generativelanguage.googleapis.com/v1beta/openai/` | Yes | `gemini-3-flash-preview` | [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [Gemini models](https://ai.google.dev/gemini-api/docs/models/gemini) |
+| Kimi (Moonshot AI) | `https://api.moonshot.cn/v1` | Yes | `kimi-thinking-preview` | [Kimi thinking model](https://platform.moonshot.cn/blog/posts/kimi-thinking) |
+| Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes | `qwen3-vl-plus` | [Qwen-VL OpenAI compatibility](https://www.alibabacloud.com/help/en/model-studio/qwen-vl-compatible-with-openai) |
+| MiniMax | `https://api.minimax.io/v1` | Yes (OpenAI format) | N/A (vision model not documented on OpenAI-compatible text endpoint) | [Compatible OpenAI API](https://platform.minimax.io/docs/api-reference/text-openai-api) |
 
 Notes:
 
@@ -51,16 +51,40 @@ Notes:
 - `scanpdf-toc` has no hardcoded default model.
 - You must choose a vision-capable model (image input support).
 
+Recommended copy-paste presets:
+
+```bash
+# OpenAI
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-4o-mini"
+
+# OpenRouter
+export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+export OPENAI_MODEL="openai/gpt-4o-mini"
+
+# Gemini
+export OPENAI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
+export OPENAI_MODEL="gemini-3-flash-preview"
+
+# Kimi
+export OPENAI_BASE_URL="https://api.moonshot.cn/v1"
+export OPENAI_MODEL="kimi-thinking-preview"
+
+# Qwen (intl)
+export OPENAI_BASE_URL="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+export OPENAI_MODEL="qwen3-vl-plus"
+```
+
 Free API by default?
 
 - Not by default. The project does not hardcode a keyless/free provider.
 - You can use free-tier models by setting your own provider key and base URL.
-- Example (OpenRouter free vision model, if available):
+- Example (OpenRouter free variant, if available):
 
 ```bash
 export OPENAI_API_KEY="your_openrouter_key"
 export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
-scanpdf-toc ./book.pdf --model <vision_model_id>
+scanpdf-toc ./book.pdf --model openai/gpt-4o-mini:free
 ```
 
 - OpenRouter free-model guidance: [FAQ: Free Models and Rate Limits](https://openrouter.ai/docs/faq#free-models-and-rate-limits).
